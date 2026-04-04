@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+from groq import Groq
 from datetime import datetime
 import base64
 
@@ -10,9 +10,32 @@ def get_base64_gif(file_path):
 
 gif = get_base64_gif("BG_3.gif")
 
-def get_model():
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    return genai.GenerativeModel("gemini-2.5-flash-lite")
+def get_response(entry):
+    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+    prompt = f"""
+Someone wrote this journal entry: "{entry}"
+
+Match their mood to 10 songs across Rap, Neo-soul, R&B, Pop and Jazz and a song from Sade and a song from Kanye West and a song from Solange, and a song from Beyonce.
+Dont be motivational just pick songs that match the vibe of the text provided.
+For each song respond in this EXACT format and nothing else:
+
+group the Sade, Beyonce, solange and kanye songs together put a Special mention tag in the Note and put these songs last
+
+
+GENRE: [genre]
+SONG: [song name]
+ARTIST: [artist name]
+NOTE:Shic: Specific(For Sade, Beyonce, solange and kanye songs only)
+ [2-3 sentences explaining why, written like a wise loving friend. End with one short empowering sentence.]
+
+Repeat this block 10 times, one per song. No bullet points, no extra text.
+"""
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=2000
+    )
+    return response.choices[0].message.content
 
 st.set_page_config(page_title="Tune Journal", page_icon="🎵", layout="centered")
 
@@ -50,25 +73,10 @@ entry = st.text_area("", placeholder="Today I feel...", height=200)
 if st.button("Find my song"):
     if entry.strip():
         with st.spinner("Feeling the vibes..."):
-            prompt = f"""
-Someone wrote this journal entry: "{entry}"
-
-Match their mood to 4 songs across Rap, Neo-soul, R&B, Pop and Jazz.
-Dont be motivational just pick songs that match the vibe of the text provided
-For each song respond in this EXACT format and nothing else:
-
-GENRE: [genre]
-SONG: [song name]
-ARTIST: [artist name]
-NOTE: [2-3 sentences explaining why, written like a wise loving friend. End with one short empowering sentence.]
-
-Repeat this block 4 times, one per song. No bullet points, no extra text.
-"""
-            model = get_model()
-            response = model.generate_content(prompt)
+            text = get_response(entry)
 
             songs = []
-            blocks = response.text.strip().split("\n\n")
+            blocks = text.strip().split("\n\n")
             for block in blocks:
                 lines = block.strip().split("\n")
                 song_data = {}
@@ -116,7 +124,7 @@ Repeat this block 4 times, one per song. No bullet points, no extra text.
             st.session_state.history.append({
                 "date": datetime.now().strftime("%B %d, %Y"),
                 "entry": entry[:80] + "...",
-                "response": response.text
+                "response": text
             })
     else:
         st.warning("Write something first, even just a few words.")
