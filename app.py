@@ -10,8 +10,9 @@ def get_base64_gif(file_path):
 
 gif = get_base64_gif("BG_3.gif")
 
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-model = genai.GenerativeModel("gemini-2.5-flash-lite")
+def get_model():
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    return genai.GenerativeModel("gemini-2.5-flash-lite")
 
 st.set_page_config(page_title="Tune Journal", page_icon="🎵", layout="centered")
 
@@ -50,35 +51,46 @@ if st.button("Find my song"):
     if entry.strip():
         with st.spinner("Feeling the vibes..."):
             prompt = f"""
-           
-            
             Someone wrote this journal entry: "{entry}"
             
-            Match their mood to 4 songs based on Rap,Neo-soul ,RnB,Pop and Jazz specific song from these artists.
-            Respond in this format:
-            -Genre
-            - Song and artist on the first line in bold
-            - 2-3 sentences max explaining why this song fits their mood, written like a wise loving friend
-            - End with one short empowering sentence
+            Match their mood to 4 songs across Rap, Neo-soul, R&B, Pop and Jazz.
+            For each song respond in this format:
+            Genre
+            Song and artist in bold
+            2-3 sentences explaining why this song fits their mood, written like a wise loving friend.
+            End with one short empowering sentence.
             
-            Keep it personal, warm, and poetic. No bullet points in the response.
+            Keep it personal, warm, and poetic. No bullet points.
             """
+            model = get_model()
             response = model.generate_content(prompt)
-            
-            st.markdown("---")
+            song_query = response.text.split("\n")[0].replace("**", "").strip()
+            spotify_url = f"https://open.spotify.com/search/{song_query.replace(' ', '%20')}"
+
             st.markdown(f"""
-    <div style="
-        background-color: rgba(0, 0, 0, 0.7);
-        border: 1px solid #d4a0ff;
-        border-radius: 12px;
-        padding: 20px 25px;
-        margin-top: 10px;
-    ">
-        <p style="color: #d4a0ff; font-size: 14px; margin-bottom: 8px; font-family: Georgia, serif;">✦ Your songs for today</p>
-        <p style="color: #f0f0f0; font-size: 16px; line-height: 1.7; margin: 0;">{response.text}</p>
-    </div>
-""", unsafe_allow_html=True)
-            
+                <div style="
+                    background-color: rgba(0, 0, 0, 0.7);
+                    border: 1px solid #d4a0ff;
+                    border-radius: 12px;
+                    padding: 20px 25px;
+                    margin-top: 10px;
+                ">
+                    <p style="color: #d4a0ff; font-size: 14px; margin-bottom: 8px; font-family: Georgia, serif;">✦ Your songs for today</p>
+                    <p style="color: #f0f0f0; font-size: 16px; line-height: 1.7; margin: 0;">{response.text}</p>
+                    <a href="{spotify_url}" target="_blank" style="
+                        display: inline-block;
+                        margin-top: 16px;
+                        background-color: #1DB954;
+                        color: #000000;
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                        text-decoration: none;
+                        font-weight: bold;
+                        font-size: 14px;
+                    ">▶ Listen on Spotify</a>
+                </div>
+            """, unsafe_allow_html=True)
+
             if "history" not in st.session_state:
                 st.session_state.history = []
             st.session_state.history.append({
@@ -88,11 +100,3 @@ if st.button("Find my song"):
             })
     else:
         st.warning("Write something first, even just a few words.")
-
-# if "history" in st.session_state and st.session_state.history:
-#     st.markdown("---")
-#     st.markdown("### Previous entries")
-#     for item in reversed(st.session_state.history[-5:]):
-#         with st.expander(item["date"]):
-#             st.caption(item["entry"])
-#             st.markdown(item["response"])
