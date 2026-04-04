@@ -26,7 +26,7 @@ GENRE: [genre]
 SONG: [song name]
 ARTIST: [artist name]
 NOTE:Shic: Special Mention(For Sade, Beyonce, solange and kanye songs only)
- [2-3 sentences explaining why, written like a wise loving friend. End with one short empowering sentence.]
+[2-3 sentences explaining why, written like a wise loving friend. End with one short empowering sentence.]
 
 Repeat this block 10 times, one per song. No bullet points, no extra text.
 """
