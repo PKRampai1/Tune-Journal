@@ -130,3 +130,19 @@ if st.button("Find my song"):
             })
     else:
         st.warning("Write something first, even just a few words.")
+
+# ── FOOTER ──
+st.markdown("""
+<div style="
+    margin-top: 60px;
+    padding: 18px 32px;
+    background-color: #1e1e2e;
+    border-radius: 12px;
+    text-align: center;
+    color: rgba(255,255,255,0.3);
+    font-size: 13px;
+    border: 1px solid #2a2a45;
+">
+    © 2026 Tune journal · $hic
+</div>
+""", unsafe_allow_html=True)
