@@ -51,45 +51,65 @@ if st.button("Find my song"):
     if entry.strip():
         with st.spinner("Feeling the vibes..."):
             prompt = f"""
-            Someone wrote this journal entry: "{entry}"
-            
-            Match their mood to 4 songs across Rap, Neo-soul, R&B, Pop and Jazz.
-            For each song respond in this format:
-            Genre
-            Song and artist in bold
-            2-3 sentences explaining why this song fits their mood, written like a wise loving friend.
-            End with one short empowering sentence.
-            
-            Keep it personal, warm, and poetic. No bullet points.
-            """
+Someone wrote this journal entry: "{entry}"
+
+Match their mood to 4 songs across Rap, Neo-soul, R&B, Pop and Jazz.
+Dont be motivational just pick songs that match the vibe of the text provided
+For each song respond in this EXACT format and nothing else:
+
+GENRE: [genre]
+SONG: [song name]
+ARTIST: [artist name]
+NOTE: [2-3 sentences explaining why, written like a wise loving friend. End with one short empowering sentence.]
+
+Repeat this block 4 times, one per song. No bullet points, no extra text.
+"""
             model = get_model()
             response = model.generate_content(prompt)
-            song_query = response.text.split("\n")[0].replace("**", "").strip()
-            spotify_url = f"https://open.spotify.com/search/{song_query.replace(' ', '%20')}"
 
-            st.markdown(f"""
-                <div style="
-                    background-color: rgba(0, 0, 0, 0.7);
-                    border: 1px solid #d4a0ff;
-                    border-radius: 12px;
-                    padding: 20px 25px;
-                    margin-top: 10px;
-                ">
-                    <p style="color: #d4a0ff; font-size: 14px; margin-bottom: 8px; font-family: Georgia, serif;">✦ Your songs for today</p>
-                    <p style="color: #f0f0f0; font-size: 16px; line-height: 1.7; margin: 0;">{response.text}</p>
-                    <a href="{spotify_url}" target="_blank" style="
-                        display: inline-block;
+            songs = []
+            blocks = response.text.strip().split("\n\n")
+            for block in blocks:
+                lines = block.strip().split("\n")
+                song_data = {}
+                for line in lines:
+                    if line.startswith("GENRE:"):
+                        song_data["genre"] = line.replace("GENRE:", "").strip()
+                    elif line.startswith("SONG:"):
+                        song_data["song"] = line.replace("SONG:", "").strip()
+                    elif line.startswith("ARTIST:"):
+                        song_data["artist"] = line.replace("ARTIST:", "").strip()
+                    elif line.startswith("NOTE:"):
+                        song_data["note"] = line.replace("NOTE:", "").strip()
+                if len(song_data) == 4:
+                    songs.append(song_data)
+
+            for s in songs:
+                spotify_url = f"https://open.spotify.com/search/{(s['song'] + ' ' + s['artist']).replace(' ', '%20')}"
+                st.markdown(f"""
+                    <div style="
+                        background-color: rgba(0, 0, 0, 0.7);
+                        border: 1px solid #d4a0ff;
+                        border-radius: 12px;
+                        padding: 20px 25px;
                         margin-top: 16px;
-                        background-color: #1DB954;
-                        color: #000000;
-                        padding: 10px 20px;
-                        border-radius: 20px;
-                        text-decoration: none;
-                        font-weight: bold;
-                        font-size: 14px;
-                    ">▶ Listen on Spotify</a>
-                </div>
-            """, unsafe_allow_html=True)
+                    ">
+                        <p style="color: #888; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">{s.get('genre', '')}</p>
+                        <p style="color: #d4a0ff; font-size: 18px; font-weight: bold; margin: 0 0 4px 0;">{s.get('song', '')}</p>
+                        <p style="color: #aaa; font-size: 14px; margin: 0 0 12px 0;">{s.get('artist', '')}</p>
+                        <p style="color: #f0f0f0; font-size: 15px; line-height: 1.7; margin: 0 0 16px 0;">{s.get('note', '')}</p>
+                        <a href="{spotify_url}" target="_blank" style="
+                            display: inline-block;
+                            background-color: #1DB954;
+                            color: #000000;
+                            padding: 8px 18px;
+                            border-radius: 20px;
+                            text-decoration: none;
+                            font-weight: bold;
+                            font-size: 13px;
+                        ">▶ Listen on Spotify</a>
+                    </div>
+                """, unsafe_allow_html=True)
 
             if "history" not in st.session_state:
                 st.session_state.history = []
