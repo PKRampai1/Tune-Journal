@@ -2,7 +2,7 @@ import streamlit as st
 from groq import Groq
 from datetime import datetime
 import base64
-
+import os
 def get_base64_gif(file_path):
     with open(file_path, "rb") as f:
         data = f.read()
@@ -10,8 +10,10 @@ def get_base64_gif(file_path):
 
 gif = get_base64_gif("BG_3.gif")
 
+
 def get_response(entry):
-    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+    api_key = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY"))
+    client = Groq(api_key=api_key)
     prompt = f"""
 Someone wrote this journal entry: "{entry}"
 
