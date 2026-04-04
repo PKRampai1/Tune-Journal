@@ -12,7 +12,7 @@ gif = get_base64_gif("BG_3.gif")
 
 
 def get_response(entry):
-    api_key = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY"))
+    api_key = os.environ.get("GROQ_API_KEY") or st.secrets.get("GROQ_API_KEY")
     client = Groq(api_key=api_key)
     prompt = f"""
 Someone wrote this journal entry: "{entry}"
@@ -70,7 +70,7 @@ st.markdown(f"""
 st.title("🎵 How are you feeling today?")
 st.caption("Write anything. No rules.")
 
-entry = st.text_area("", placeholder="Today I feel...", height=200)
+entry = st.text_area("Journal entry", placeholder="Today I feel...", height=200, label_visibility="hidden")
 
 if st.button("Find my song"):
     if entry.strip():
